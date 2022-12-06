@@ -1,13 +1,9 @@
+#include <algorithm>
 #include <iostream>
 #include <cstdint>
 #include <cmath>
-
-#include <string>
-#include <ostream>
-
-#include <algorithm>
-#include <thread>
-#include <mutex>
+// #include <thread>
+// #include <mutex>
 
 #include "BWindow/GDIWindow.h"
 
