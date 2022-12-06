@@ -10,27 +10,6 @@
 #include "windows.h"
 
 
-/*
-var scene = 
-	{
-		gravity : -9.81,
-		dt : 1.0 / 120.0,
-		numIters : 100,
-		frameNr : 0,
-		overRelaxation : 1.9,
-		obstacleX : 0.0,
-		obstacleY : 0.0,
-		obstacleRadius: 0.15,
-		paused: false,
-		sceneNr: 0,
-		showObstacle: false,
-		showStreamlines: false,
-		showVelocities: false,	
-		showPressure: false,
-		showSmoke: true,
-		fluid: null
-	};*/
-
 struct vec2 {
 	float x, y;
 };
@@ -53,7 +32,6 @@ struct FluidGrid {
 	inline FluidGrid() {
 		for(size_t y = 0; y < NUM_CELLS_Y + 1; y++)
 			for(size_t x = 0; x < NUM_CELLS_X + 1; x++)
-			// for(size_t x = 1; x < NUM_CELLS_X; x++)
 				s[y][x] = 1.f;
 	}
 
@@ -70,22 +48,6 @@ struct FluidGrid {
 		return hor[y][x + 1] - hor[y][x] // horizontal divergence
 			+ vert[y + 1][x] - vert[y][x]; // vertical divergence
 	}
-
-	// inline void solveDivergence(const size_t num_iter = 100, const float overRelaxation = 1.9f) { // change velocities so divergence becomes 0
-	// 	for(size_t i = 0; i < num_iter; i++) {
-	// 		for(size_t y = 0; y < NUM_CELLS_Y; y++) {
-	// 			for(size_t x = 0; x < NUM_CELLS_X; x++) {
-	// 				const float currentDivergence = divergence(x, y);
-	// 				const float correctionFactor = -currentDivergence / 4.f * overRelaxation; // TODO: adapt for walls (replace 4)
-
-	// 				hor[y][x + 1]	-= correctionFactor;
-	// 				hor[y][x]		+= correctionFactor;
-	// 				vert[y + 1][x]	-= correctionFactor;
-	// 				vert[y][x]		+= correctionFactor;
-	// 			}
-	// 		}
-	// 	}
-	// }
 
 	inline void solveDivergence(const size_t num_iter = 100, const float overRelaxation = 1.9f) { // change velocities so divergence becomes 0
 		for(size_t i = 0; i < num_iter; i++) {
@@ -108,10 +70,6 @@ struct FluidGrid {
 					hor[y][x+1] += correctionFactor * sx1;
 					vert[y  ][x] -= correctionFactor * sy0;
 					vert[y+1][x] += correctionFactor * sy1;
-					// hor[y][x + 1]	-= correctionFactor;
-					// hor[y][x]		+= correctionFactor;
-					// vert[y + 1][x]	-= correctionFactor;
-					// vert[y][x]		+= correctionFactor;
 				}
 			}
 		}
@@ -143,13 +101,9 @@ struct FluidGrid {
 		const float (*f)[NUM_CELLS_X + 1];
 
 		switch (field) {
-			// case U_FIELD: f = this.u; dy = h2; break;
-			// case V_FIELD: f = this.v; dx = h2; break;
-			// case S_FIELD: f = this.m; dx = h2; dy = h2; break
 			case Field::VEL_X: f = hor; dy = h2; break;
 			case Field::VEL_Y: f = vert; dx = h2; break;
 			case Field::SMOKE: f = smoke; dx = h2; dy = h2; break;
-			// case S_FIELD: f = this.m; dx = h2; dy = h2; break
 		}
 
 		const size_t x0 = std::min<size_t>(std::floor((x-dx)*h1), NUM_CELLS_X-1);
@@ -168,10 +122,6 @@ struct FluidGrid {
 			tx*sy * f[y0][x1] +
 			tx*ty * f[y1][x1] +
 			sx*ty * f[y1][x0];
-		// const float val = sx*sy * f[x0*n + y0] +
-		// 	tx*sy * f[x1*n + y0] +
-		// 	tx*ty * f[x1*n + y1] +
-		// 	sx*ty * f[x0*n + y1];
 		
 		return val;
 	}
@@ -187,9 +137,6 @@ struct FluidGrid {
 	}
 
 	static inline void update(FluidGrid& prev, FluidGrid& next, const float dt) {
-		// memcpy(next.hor, prev.hor, sizeof(float) * (NUM_CELLS_X + 1) * NUM_CELLS_Y);
-		// memcpy(next.vert, prev.vert, sizeof(float) * NUM_CELLS_X * (NUM_CELLS_Y + 1));
-
 		for(size_t y = 1; y < NUM_CELLS_Y; y++) {
 			for(size_t x = 1; x < NUM_CELLS_X; x++) {
 				// update horizontal velocities:
@@ -231,11 +178,8 @@ struct FluidGrid {
 				const float velX = (prev.hor[y][x] + prev.hor[y][x + 1]) * .5f;
 				const float velY = (prev.vert[y][x] + prev.vert[y + 1][x]) * .5f;
 
-				// const float sourceX = x + .5f - velX * dt;
-				// const float sourceY = y + .5f - velY * dt;
-
-				const float sourceX = x + .50f - velX * dt;
-				const float sourceY = y + .50f - velY * dt;
+				const float sourceX = x + .5f - velX * dt;
+				const float sourceY = y + .5f - velY * dt;
 
 				next.smoke[y][x] = prev.sample(Field::SMOKE, sourceX, sourceY);
 			}
@@ -305,10 +249,7 @@ int main() {
 
 		// vCurrent->addVel(0, 9.81f);
 
-		// static bool first=true;
-		// if(first ||GetAsyncKeyState('S') & 0x8000)
 		vCurrent->solveDivergence(10, 1.9f);
-		// first=false;
 
 		// const size_t iter = 1;
 		// for(size_t i = 0; i < iter; i++)
